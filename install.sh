@@ -340,33 +340,21 @@ echo "✅ Selected configuration:"
 [ -n "${CONCURRENCY}" ] && echo "   Max concurrency: ${CONCURRENCY}" || echo "   Max concurrency: (will use Cloud Run default)"
 
 # -------- Sanity checks --------
-# Skip gcloud presence check in DRY_RUN so testing can proceed
-if [ -z "${DRY_RUN:-}" ]; then
-  if ! command -v gcloud >/dev/null 2>&1; then
-    echo "❌ gcloud CLI not found. Install and authenticate first."
-    exit 1
-  fi
+if ! command -v gcloud >/dev/null 2>&1; then
+  echo "❌ gcloud CLI not found. Install and authenticate first."
+  exit 1
 fi
 
-if [ -z "${DRY_RUN:-}" ]; then
-  PROJECT=$(gcloud config get-value project 2>/dev/null || true)
-  if [ -z "${PROJECT:-}" ]; then
-    echo "❌ No GCP project set. Run 'gcloud init' or 'gcloud config set project PROJECT_ID'."
-    exit 1
-  fi
-else
-  PROJECT="dry-run"
+PROJECT=$(gcloud config get-value project 2>/dev/null || true)
+if [ -z "${PROJECT:-}" ]; then
+  echo "❌ No GCP project set. Run 'gcloud init' or 'gcloud config set project PROJECT_ID'."
+  exit 1
 fi
 
 # -------- APIs --------
 echo "⚙️ Enabling required APIs..."
-# If DRY_RUN is set, skip actual gcloud calls (used for testing the interactive flow)
-if [ -z "${DRY_RUN:-}" ]; then
-  gcloud services enable run.googleapis.com cloudbuild.googleapis.com --quiet
-  echo "🚀 Deploying XRAY to Cloud Run..."
-else
-  echo "DRY_RUN=1 - skipping API enable and deploy (dry run)"
-fi
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com --quiet
+echo "🚀 Deploying XRAY to Cloud Run..."
 
 # Build deploy command with optional parameters
 DEPLOY_ARGS=(
@@ -385,18 +373,11 @@ DEPLOY_ARGS=(
 DEPLOY_ARGS+=("--set-env-vars" "PROTO=${PROTO},USER_ID=${UUID},WS_PATH=${WSPATH},NETWORK=${NETWORK}")
 DEPLOY_ARGS+=("--quiet")
 
-if [ -z "${DRY_RUN:-}" ]; then
-  gcloud run deploy "$SERVICE" "${DEPLOY_ARGS[@]}"
-else
-  echo "DRY_RUN=1 - skipping 'gcloud run deploy'"
-fi
+# -------- Get URL --------
+gcloud run deploy "$SERVICE" "${DEPLOY_ARGS[@]}"
 
 # -------- Get URL --------
-if [ -z "${DRY_RUN:-}" ]; then
-  PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project 2>/dev/null) --format="value(projectNumber)" 2>/dev/null)
-else
-  PROJECT_NUMBER="000000000000"
-fi
+PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project 2>/dev/null) --format="value(projectNumber)" 2>/dev/null)
 
 # Use custom hostname if provided, otherwise use Cloud Run default
 if [ -n "${CUSTOM_HOST}" ]; then
