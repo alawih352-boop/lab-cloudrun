@@ -313,7 +313,7 @@ fi
 if [ "${INTERACTIVE}" = true ] && [ -z "${MEMORY:-}" ]; then
   read -rp "💾 Memory (MB) [e.g., 512, 1024, 2048]: " MEMORY
 fi
-MEMORY="${MEMORY}"
+MEMORY="${MEMORY:-}"
 
 if [ "${INTERACTIVE}" = true ] && [ -z "${CPU:-}" ]; then
   read -rp "⚙️  CPU cores [e.g., 0.5, 1, 2]: " CPU
