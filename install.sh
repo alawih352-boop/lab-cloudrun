@@ -345,9 +345,12 @@ echo "✅ Selected configuration:"
 [ -n "${CONCURRENCY}" ] && echo "   Max concurrency: ${CONCURRENCY}" || echo "   Max concurrency: (will use Cloud Run default)"
 
 # -------- Sanity checks --------
-if ! command -v gcloud >/dev/null 2>&1; then
-  echo "❌ gcloud CLI not found. Install and authenticate first."
-  exit 1
+# Skip gcloud presence check in DRY_RUN so testing can proceed
+if [ -z "${DRY_RUN:-}" ]; then
+  if ! command -v gcloud >/dev/null 2>&1; then
+    echo "❌ gcloud CLI not found. Install and authenticate first."
+    exit 1
+  fi
 fi
 
 if [ -z "${DRY_RUN:-}" ]; then
