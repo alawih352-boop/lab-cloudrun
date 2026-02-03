@@ -19,6 +19,10 @@ Max Instances: 16
 Concurrency: 1000
 ```
 
+```
+Timeout: 3600s
+```
+
 **الحالات المناسبة:**
 
 - تطبيقات الإنتاج
@@ -36,6 +40,10 @@ Memory: 2048MB
 CPU: 2
 Max Instances: 8
 Concurrency: 1000
+```
+
+```
+Timeout: 3600s
 ```
 
 **الحالات المناسبة:**

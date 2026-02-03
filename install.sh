@@ -19,8 +19,8 @@ echo "=========================================="
 
 # -------- Preset Configurations --------
 declare -A PRESETS=(
-  [production]="memory=2048|cpu=1|instances=16|concurrency=1000"
-  [budget]="memory=2048|cpu=2|instances=8|concurrency=1000"
+  [production]="memory=2048|cpu=1|instances=16|concurrency=1000|timeout=3600"
+  [budget]="memory=2048|cpu=2|instances=8|concurrency=1000|timeout=3600"
 )
 
 apply_preset() {
@@ -35,6 +35,7 @@ apply_preset() {
         cpu) CPU="$value" ;;
         instances) MAX_INSTANCES="$value" ;;
         concurrency) CONCURRENCY="$value" ;;
+        timeout) TIMEOUT="$value" ;;
       esac
     done
   fi
@@ -196,15 +197,8 @@ else
   WSPATH=""
 fi
 
-# -------- Custom Hostname (optional) --------
-if [ "${INTERACTIVE}" = true ] && [ -z "${CUSTOM_HOST:-}" ]; then
-  echo ""
-  echo "🌐 Custom Hostname Options:"
-  echo "   Leave blank to use Cloud Run default: SERVICE-PROJECT_ID.REGION.run.app"
-  echo "   Or enter a custom domain: my-proxy.example.com"
-  read -rp "Custom hostname (optional): " CUSTOM_HOST
-fi
-CUSTOM_HOST="${CUSTOM_HOST:-}"
+# Custom hostname is not supported reliably by this script; always use Cloud Run default
+CUSTOM_HOST=""
 
 # -------- Service Name --------
 if [ "${INTERACTIVE}" = true ] && [ -z "${SERVICE:-}" ]; then
@@ -279,10 +273,9 @@ case "$ALPN_CHOICE" in
     ;;
 esac
 
-if [ "${INTERACTIVE}" = true ] && [ -z "${CUSTOM_ID:-}" ]; then
-  read -rp "🏷️  Custom Identifier for Link (e.g., S103, optional): " CUSTOM_ID
-fi
-CUSTOM_ID="${CUSTOM_ID:-}"
+# Use region name as the default identifier for links
+# CUSTOM_ID is set after region selection to the chosen region
+CUSTOM_ID=""
 
 # -------- UUID --------
 UUID=$(cat /proc/sys/kernel/random/uuid)
@@ -298,6 +291,8 @@ if [ "${INTERACTIVE}" = true ] && [ -z "${REGION:-}" ]; then
     exit 1
   fi
   REGION="${SUGGESTED_REGIONS[$((REGION_IDX-1))]}"
+  # set custom identifier to region name
+  CUSTOM_ID="$REGION"
 fi
 REGION="${REGION:-us-central1}"
 echo "✅ Selected region: $REGION"

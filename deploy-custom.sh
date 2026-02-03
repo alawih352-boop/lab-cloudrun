@@ -17,8 +17,8 @@ fi
 
 # -------- Preset Configurations --------
 declare -A PRESETS=(
-  [production]="memory=2048|cpu=1|instances=16|concurrency=1000"
-  [budget]="memory=2048|cpu=2|instances=8|concurrency=1000"
+  [production]="memory=2048|cpu=1|instances=16|concurrency=1000|timeout=3600"
+  [budget]="memory=2048|cpu=2|instances=8|concurrency=1000|timeout=3600"
 )
 
 apply_preset() {
@@ -33,6 +33,7 @@ apply_preset() {
         cpu) CPU="$value" ;;
         instances) MAX_INSTANCES="$value" ;;
         concurrency) CONCURRENCY="$value" ;;
+        timeout) TIMEOUT="$value" ;;
       esac
     done
   fi
