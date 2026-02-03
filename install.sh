@@ -397,7 +397,11 @@ else
 fi
 
 # -------- Get URL --------
-PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project 2>/dev/null) --format="value(projectNumber)" 2>/dev/null)
+if [ -z "${DRY_RUN:-}" ]; then
+  PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project 2>/dev/null) --format="value(projectNumber)" 2>/dev/null)
+else
+  PROJECT_NUMBER="000000000000"
+fi
 
 # Use custom hostname if provided, otherwise use Cloud Run default
 if [ -n "${CUSTOM_HOST}" ]; then
