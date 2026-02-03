@@ -358,9 +358,13 @@ fi
 
 # -------- APIs --------
 echo "⚙️ Enabling required APIs..."
-gcloud services enable run.googleapis.com cloudbuild.googleapis.com --quiet
-
-echo "🚀 Deploying XRAY to Cloud Run..."
+# If DRY_RUN is set, skip actual gcloud calls (used for testing the interactive flow)
+if [ -z "${DRY_RUN:-}" ]; then
+  gcloud services enable run.googleapis.com cloudbuild.googleapis.com --quiet
+  echo "🚀 Deploying XRAY to Cloud Run..."
+else
+  echo "DRY_RUN=1 - skipping API enable and deploy (dry run)"
+fi
 
 # Build deploy command with optional parameters
 DEPLOY_ARGS=(
@@ -379,7 +383,11 @@ DEPLOY_ARGS=(
 DEPLOY_ARGS+=("--set-env-vars" "PROTO=${PROTO},USER_ID=${UUID},WS_PATH=${WSPATH},NETWORK=${NETWORK}")
 DEPLOY_ARGS+=("--quiet")
 
-gcloud run deploy "$SERVICE" "${DEPLOY_ARGS[@]}"
+if [ -z "${DRY_RUN:-}" ]; then
+  gcloud run deploy "$SERVICE" "${DEPLOY_ARGS[@]}"
+else
+  echo "DRY_RUN=1 - skipping 'gcloud run deploy'"
+fi
 
 # -------- Get URL --------
 PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project 2>/dev/null) --format="value(projectNumber)" 2>/dev/null)
