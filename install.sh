@@ -40,24 +40,37 @@ apply_preset() {
   fi
 }
 
-# Show available Google Cloud Run regions
+# Suggested short list of regions (user will choose by index)
+SUGGESTED_REGIONS=(
+  us-central1
+  us-east1
+  us-west1
+  europe-west1
+  europe-west4
+  asia-northeast1
+  asia-southeast1
+  asia-south1
+  australia-southeast1
+)
+
 show_regions() {
   echo ""
-  echo "🌍 Available Cloud Run Regions:"
+  echo "🌍 Suggested Cloud Run Regions (pick one):"
   echo ""
+  AVAILABLE=""
   if command -v gcloud >/dev/null 2>&1; then
-    gcloud run regions list --format="table(name)" 2>/dev/null | tail -n +2 | nl
-  else
-    echo "1) us-central1 (Iowa)"
-    echo "2) us-east1 (South Carolina)"
-    echo "3) us-west1 (Oregon)"
-    echo "4) europe-west1 (Belgium)"
-    echo "5) europe-west6 (Switzerland)"
-    echo "6) asia-northeast1 (Tokyo)"
-    echo "7) asia-southeast1 (Singapore)"
-    echo "8) asia-south1 (Delhi)"
-    echo "9) australia-southeast1 (Sydney)"
+    AVAILABLE=$(gcloud run regions list --format="value(name)" 2>/dev/null || true)
   fi
+
+  i=1
+  for r in "${SUGGESTED_REGIONS[@]}"; do
+    if [ -n "$AVAILABLE" ] && echo "$AVAILABLE" | grep -xq "$r"; then
+      printf "%2d) %s (available)\n" "$i" "$r"
+    else
+      printf "%2d) %s\n" "$i" "$r"
+    fi
+    ((i++))
+  done
 }
 
 # -------- Preset Selection --------
@@ -276,9 +289,15 @@ UUID=$(cat /proc/sys/kernel/random/uuid)
 
 # -------- Region Select --------
 echo ""
-if [ "${INTERACTIVE}" = true ] && [ -z "${IDX:-}" ]; then
+if [ "${INTERACTIVE}" = true ] && [ -z "${REGION:-}" ]; then
   show_regions
-  read -rp "Select region by name (default: us-central1): " REGION
+  read -rp "Select region [1-${#SUGGESTED_REGIONS[@]}] (default: 1): " REGION_IDX
+  REGION_IDX="${REGION_IDX:-1}"
+  if [[ ! "$REGION_IDX" =~ ^[0-9]+$ ]] || [ "$REGION_IDX" -lt 1 ] || [ "$REGION_IDX" -gt ${#SUGGESTED_REGIONS[@]} ]; then
+    echo "❌ Invalid region selection"
+    exit 1
+  fi
+  REGION="${SUGGESTED_REGIONS[$((REGION_IDX-1))]}"
 fi
 REGION="${REGION:-us-central1}"
 echo "✅ Selected region: $REGION"
