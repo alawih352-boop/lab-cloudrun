@@ -318,22 +318,22 @@ MEMORY="${MEMORY}"
 if [ "${INTERACTIVE}" = true ] && [ -z "${CPU:-}" ]; then
   read -rp "⚙️  CPU cores [e.g., 0.5, 1, 2]: " CPU
 fi
-CPU="${CPU}"
+CPU="${CPU:-}"
 
 if [ "${INTERACTIVE}" = true ] && [ -z "${TIMEOUT:-}" ]; then
   read -rp "⏱️  Request timeout (seconds) [e.g., 300, 1800, 3600]: " TIMEOUT
 fi
-TIMEOUT="${TIMEOUT}"
+TIMEOUT="${TIMEOUT:-}"
 
 if [ "${INTERACTIVE}" = true ] && [ -z "${MAX_INSTANCES:-}" ]; then
   read -rp "📊 Max instances [e.g., 5, 10, 20, 50]: " MAX_INSTANCES
 fi
-MAX_INSTANCES="${MAX_INSTANCES}"
+MAX_INSTANCES="${MAX_INSTANCES:-}"
 
 if [ "${INTERACTIVE}" = true ] && [ -z "${CONCURRENCY:-}" ]; then
   read -rp "🔗 Max concurrent requests per instance [e.g., 50, 100, 500, 1000]: " CONCURRENCY
 fi
-CONCURRENCY="${CONCURRENCY}"
+CONCURRENCY="${CONCURRENCY:-}"
 
 # Show what was selected
 echo ""
@@ -350,10 +350,14 @@ if ! command -v gcloud >/dev/null 2>&1; then
   exit 1
 fi
 
-PROJECT=$(gcloud config get-value project 2>/dev/null || true)
-if [ -z "${PROJECT:-}" ]; then
-  echo "❌ No GCP project set. Run 'gcloud init' or 'gcloud config set project PROJECT_ID'."
-  exit 1
+if [ -z "${DRY_RUN:-}" ]; then
+  PROJECT=$(gcloud config get-value project 2>/dev/null || true)
+  if [ -z "${PROJECT:-}" ]; then
+    echo "❌ No GCP project set. Run 'gcloud init' or 'gcloud config set project PROJECT_ID'."
+    exit 1
+  fi
+else
+  PROJECT="dry-run"
 fi
 
 # -------- APIs --------
