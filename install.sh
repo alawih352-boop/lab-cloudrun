@@ -17,6 +17,74 @@ echo "=========================================="
 echo "  XRAY Cloud Run (VLESS / VMESS / TROJAN)"
 echo "=========================================="
 
+# -------- Preset Configurations --------
+declare -A PRESETS=(
+  [production]="memory=2048|cpu=1|instances=16|concurrency=1000"
+  [budget]="memory=2048|cpu=2|instances=8|concurrency=1000"
+)
+
+apply_preset() {
+  local preset=$1
+  if [[ -v PRESETS[$preset] ]]; then
+    local config="${PRESETS[$preset]}"
+    IFS='|' read -ra settings <<< "$config"
+    for setting in "${settings[@]}"; do
+      IFS='=' read -r key value <<< "$setting"
+      case "$key" in
+        memory) MEMORY="$value" ;;
+        cpu) CPU="$value" ;;
+        instances) MAX_INSTANCES="$value" ;;
+        concurrency) CONCURRENCY="$value" ;;
+      esac
+    done
+  fi
+}
+
+# Show available Google Cloud Run regions
+show_regions() {
+  echo ""
+  echo "🌍 Available Cloud Run Regions:"
+  echo ""
+  if command -v gcloud >/dev/null 2>&1; then
+    gcloud run regions list --format="table(name)" 2>/dev/null | tail -n +2 | nl
+  else
+    echo "1) us-central1 (Iowa)"
+    echo "2) us-east1 (South Carolina)"
+    echo "3) us-west1 (Oregon)"
+    echo "4) europe-west1 (Belgium)"
+    echo "5) europe-west6 (Switzerland)"
+    echo "6) asia-northeast1 (Tokyo)"
+    echo "7) asia-southeast1 (Singapore)"
+    echo "8) asia-south1 (Delhi)"
+    echo "9) australia-southeast1 (Sydney)"
+  fi
+}
+
+# -------- Preset Selection --------
+if [ "${INTERACTIVE}" = true ] && [ -z "${PRESET:-}" ]; then
+  echo ""
+  echo "⚡ Quick Start with Presets:"
+  echo "1) production (2048MB, 1 CPU, 16 instances, 1000 concurrency)"
+  echo "2) budget (2048MB, 2 CPU, 8 instances, 1000 concurrency)"
+  echo "3) custom (configure everything manually)"
+  read -rp "Select preset [1-3] (default: 3): " PRESET_CHOICE
+fi
+PRESET_CHOICE="${PRESET_CHOICE:-3}"
+
+case "$PRESET_CHOICE" in
+  1)
+    apply_preset "production"
+    PRESET_MODE="production"
+    ;;
+  2)
+    apply_preset "budget"
+    PRESET_MODE="budget"
+    ;;
+  *)
+    PRESET_MODE="custom"
+    ;;
+esac
+
 # -------- Telegram Bot --------
 if [ "${INTERACTIVE}" = true ] && [ -z "${BOT_TOKEN:-}" ]; then
   read -rp "🤖 Telegram Bot Token (optional, press Enter to skip): " BOT_TOKEN
@@ -208,32 +276,20 @@ UUID=$(cat /proc/sys/kernel/random/uuid)
 
 # -------- Region Select --------
 echo ""
-AVAILABLE_REGIONS=("us-central1" "us-east1" "us-west1" "us-south1" "europe-west1" "europe-west4" "asia-east1" "asia-northeast1" "asia-southeast1")
-
 if [ "${INTERACTIVE}" = true ] && [ -z "${IDX:-}" ]; then
-  echo "🌍 Available regions:"
-  i=1
-  for r in "${AVAILABLE_REGIONS[@]}"; do
-    echo "$i) $r"
-    ((i++))
-  done
-  read -rp "Select region [1-${#AVAILABLE_REGIONS[@]}] (default: 1): " IDX
+  show_regions
+  read -rp "Select region by name (default: us-central1): " REGION
 fi
-
-IDX="${IDX:-1}"
-
-# Validate region selection
-if [[ ! "$IDX" =~ ^[0-9]+$ ]] || [ "$IDX" -lt 1 ] || [ "$IDX" -gt ${#AVAILABLE_REGIONS[@]} ]; then
-  echo "❌ Invalid region selection"
-  exit 1
-fi
-
-REGION="${AVAILABLE_REGIONS[$((IDX-1))]}"
+REGION="${REGION:-us-central1}"
 echo "✅ Selected region: $REGION"
 
 # -------- Performance Settings --------
 echo ""
-echo "⚙️  Performance Configuration (optional, press Enter to skip):"
+if [ "$PRESET_MODE" = "custom" ]; then
+  echo "⚙️  Performance Configuration (optional, press Enter to skip):"
+else
+  echo "⚙️  Performance Configuration (preset: $PRESET_MODE - press Enter to keep)"
+fi
 
 if [ "${INTERACTIVE}" = true ] && [ -z "${MEMORY:-}" ]; then
   read -rp "💾 Memory (MB) [e.g., 512, 1024, 2048]: " MEMORY
