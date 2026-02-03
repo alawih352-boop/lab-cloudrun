@@ -133,6 +133,42 @@ if [ -z "${UUID:-}" ]; then
   UUID=$(cat /proc/sys/kernel/random/uuid)
 fi
 
+# -------- Deployment Method --------
+if [ "${INTERACTIVE}" = true ] && [ -z "${DEPLOY_METHOD:-}" ]; then
+  echo ""
+  echo "🚚 Deployment method:"
+  echo "1) image (recommended: build and push Docker image, then deploy with --image)"
+  echo "2) source (deploy with --source .)"
+  read -rp "Select method [1-2] (default: 1): " DEPLOY_CHOICE
+fi
+DEPLOY_CHOICE="${DEPLOY_CHOICE:-1}"
+
+if [ "$DEPLOY_CHOICE" = "1" ]; then
+  DEPLOY_METHOD="image"
+else
+  DEPLOY_METHOD="source"
+fi
+
+if [ "$DEPLOY_METHOD" = "image" ]; then
+  # Ask for image name or construct one
+  if [ -z "${IMAGE:-}" ]; then
+    if command -v gcloud >/dev/null 2>&1; then
+      GCLOUD_PROJECT=$(gcloud config get-value project 2>/dev/null || true)
+    else
+      GCLOUD_PROJECT=""
+    fi
+    if [ -n "$GCLOUD_PROJECT" ]; then
+      DEFAULT_IMAGE="gcr.io/${GCLOUD_PROJECT}/${SERVICE}:lab"
+    else
+      DEFAULT_IMAGE="gcr.io/<PROJECT>/${SERVICE}:lab"
+    fi
+    if [ "${INTERACTIVE}" = true ]; then
+      read -rp "Docker image to push (default: ${DEFAULT_IMAGE}): " IMAGE
+    fi
+    IMAGE="${IMAGE:-$DEFAULT_IMAGE}"
+  fi
+fi
+
 # -------- Performance Settings (All Optional) --------
 echo ""
 if [ "$PRESET_MODE" = "custom" ]; then
@@ -276,12 +312,36 @@ echo ""
 echo "🚀 Deploying to Cloud Run..."
 
 # Build deploy command with optional parameters
-DEPLOY_ARGS=(
-  "--source" "."
-  "--region" "$REGION"
-  "--platform" "managed"
-  "--allow-unauthenticated"
-)
+if [ "${DEPLOY_METHOD:-source}" = "image" ]; then
+  # Build & push image using Cloud Build
+  echo "🔨 Building and pushing image: ${IMAGE}"
+  if ! command -v gcloud >/dev/null 2>&1; then
+    echo "❌ gcloud CLI not found. Install and authenticate first."
+    exit 1
+  fi
+  # Ensure project is set
+  GCLOUD_PROJECT=$(gcloud config get-value project 2>/dev/null || true)
+  if [ -z "$GCLOUD_PROJECT" ]; then
+    echo "❌ No GCP project set. Run 'gcloud init' or 'gcloud config set project PROJECT_ID'."
+    exit 1
+  fi
+  # If IMAGE uses <PROJECT> placeholder, replace it
+  IMAGE="${IMAGE//<PROJECT>/$GCLOUD_PROJECT}"
+  gcloud builds submit --tag "$IMAGE" .
+  DEPLOY_ARGS=(
+    "--image" "$IMAGE"
+    "--region" "$REGION"
+    "--platform" "managed"
+    "--allow-unauthenticated"
+  )
+else
+  DEPLOY_ARGS=(
+    "--source" "."
+    "--region" "$REGION"
+    "--platform" "managed"
+    "--allow-unauthenticated"
+  )
+fi
 
 [ -n "${MEMORY}" ] && DEPLOY_ARGS+=("--memory" "${MEMORY}Mi")
 [ -n "${CPU}" ] && DEPLOY_ARGS+=("--cpu" "${CPU}")
