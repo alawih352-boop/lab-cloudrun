@@ -32,6 +32,7 @@ func main() {
 	wspath := getenv("WS_PATH", "/ws")
 	network := getenv("NETWORK", "ws")
 	port := getenv("PORT", "8080")
+	speedLimit := getenv("SPEED_LIMIT", "3000")  // 3000 KB/s = 3 Mbps
 
 	// replace placeholders
 	repl := map[string]string{
@@ -40,6 +41,7 @@ func main() {
 		"__WS_PATH__": wspath,
 		"__NETWORK__": network,
 		"__PORT__": port,
+		"__SPEED_LIMIT__": speedLimit,
 	}
 	for k,v := range repl {
 		s = strings.ReplaceAll(s, k, v)

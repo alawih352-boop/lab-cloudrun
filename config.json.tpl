@@ -11,7 +11,8 @@
         "clients": [
           {
             "id": "__USER_ID__",
-            "password": "__USER_ID__"
+            "password": "__USER_ID__",
+            "level": 0
           }
         ],
         "decryption": "none"
@@ -30,13 +31,43 @@
         "grpcSettings": {
           "serviceName": "__WS_PATH__"
         }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls"]
       }
     }
   ],
   "outbounds": [
     {
       "protocol": "freedom",
-      "settings": {}
+      "settings": {},
+      "streamSettings": {
+        "sockopt": {
+          "tcpFastOpen": true
+        }
+      },
+      "tag": "direct"
     }
-  ]
+  ],
+  "stats": {},
+  "api": {
+    "tag": "api",
+    "services": ["StatsService"]
+  },
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserUplink": true,
+        "statsUserDownlink": true,
+        "bufferSize": 10240,
+        "uplinkCapacity": __SPEED_LIMIT__,
+        "downlinkCapacity": __SPEED_LIMIT__
+      }
+    },
+    "system": {
+      "statsInboundUplink": true,
+      "statsInboundDownlink": true
+    }
+  }
 }

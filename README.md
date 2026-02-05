@@ -22,7 +22,7 @@ Deploy Xray-core on Google Cloud Run with WebSocket + TLS.
 ### الطريقة 1: البرنامج التفاعلي (الأبسط)
 
 ```bash
-git clone https://github.com/tofeko997-source/lab-cloudrun.git
+git clone https://github.com/alawih352-boop/lab-cloudrun.git
 cd lab-cloudrun
 chmod +x install.sh
 ./install.sh

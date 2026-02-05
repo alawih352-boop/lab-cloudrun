@@ -19,7 +19,7 @@ echo "=========================================="
 
 # -------- Preset Configurations --------
 declare -A PRESETS=(
-  [production]="memory=2048|cpu=1|instances=16|concurrency=1000|timeout=3600"
+  [production]="memory=2048|cpu=1|instances=16|concurrency=100|timeout=3600"
   [budget]="memory=2048|cpu=2|instances=8|concurrency=1000|timeout=3600"
 )
 
@@ -78,21 +78,16 @@ show_regions() {
 if [ "${INTERACTIVE}" = true ] && [ -z "${PRESET:-}" ]; then
   echo ""
   echo "⚡ Quick Start with Presets:"
-  echo "1) production (2048MB, 1 CPU, 16 instances, 1000 concurrency)"
-  echo "2) budget (2048MB, 2 CPU, 8 instances, 1000 concurrency)"
-  echo "3) custom (configure everything manually)"
-  read -rp "Select preset [1-3] (default: 3): " PRESET_CHOICE
+  echo "1) production (2048MB, 1 CPU, 16 instances, 100 concurrency)"
+  echo "2) custom (اختياري - configure everything manually)"
+  read -rp "Select preset [1-2] (default: 1): " PRESET_CHOICE
 fi
-PRESET_CHOICE="${PRESET_CHOICE:-3}"
+PRESET_CHOICE="${PRESET_CHOICE:-1}"
 
 case "$PRESET_CHOICE" in
   1)
     apply_preset "production"
     PRESET_MODE="production"
-    ;;
-  2)
-    apply_preset "budget"
-    PRESET_MODE="budget"
     ;;
   *)
     PRESET_MODE="custom"
@@ -370,7 +365,10 @@ DEPLOY_ARGS=(
 [ -n "${MAX_INSTANCES}" ] && DEPLOY_ARGS+=("--max-instances" "${MAX_INSTANCES}")
 [ -n "${CONCURRENCY}" ] && DEPLOY_ARGS+=("--concurrency" "${CONCURRENCY}")
 
-DEPLOY_ARGS+=("--set-env-vars" "PROTO=${PROTO},USER_ID=${UUID},WS_PATH=${WSPATH},NETWORK=${NETWORK}")
+# Speed limit: 3 Mbps = 3000 KB/s
+SPEED_LIMIT="3000"
+
+DEPLOY_ARGS+=("--set-env-vars" "PROTO=${PROTO},USER_ID=${UUID},WS_PATH=${WSPATH},NETWORK=${NETWORK},SPEED_LIMIT=${SPEED_LIMIT}")
 DEPLOY_ARGS+=("--quiet")
 
 # -------- Get URL --------
@@ -405,6 +403,7 @@ elif [ "$NETWORK" = "grpc" ]; then
 fi
 echo "Network  : $NETWORK_DISPLAY"
 echo "TLS      : ON"
+echo "Speed Limit: 3 Mbps per connection"
 if [ -n "${MEMORY}${CPU}${TIMEOUT}${MAX_INSTANCES}${CONCURRENCY}" ]; then
   echo ""
   echo "⚙️  Configuration Applied:"
@@ -452,7 +451,8 @@ if [ -n "${CUSTOM_ID}" ]; then
 fi
 
 if [ "$PROTO" = "vless" ]; then
-  VLESS_LINK="vless://${UUID}@${HOST}:443?${QUERY_PARAMS}#${LINK_FRAGMENT}"
+  VLESS_QUERY="${QUERY_PARAMS}&host=${HOST}"
+  VLESS_LINK="vless://${UUID}@${HOST}:443?${VLESS_QUERY}#${LINK_FRAGMENT}"
   echo ""
   echo "📎 VLESS LINK:"
   echo "$VLESS_LINK"
