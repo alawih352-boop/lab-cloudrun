@@ -135,16 +135,16 @@ send_telegram() {
       [ -z "$public_country" ] && public_country="unknown"
     fi
 
-    local msg="<b>📌 XRAY Deployment</b>\n"
-    msg+="<b>Date:</b> ${ts}\n"
-    msg+="<b>Service:</b> ${SERVICE}\n"
-    msg+="<b>Protocol:</b> ${PROTO^^}\n"
-    msg+="<b>Region:</b> ${REGION}\n"
-    msg+="<b>Host:</b> ${HOST}\n"
-    msg+="<b>Public IP:</b> ${public_ip}\n"
-    msg+="<b>Country:</b> ${public_country}\n"
-    msg+="<b>Network:</b> ${NETWORK_DISPLAY}\n"
-    msg+="<b>Speed Limit:</b> ${speed_text}\n\n"
+    local msg="<b>📌 XRAY Deployment</b>"
+    msg+="<b>Date:</b> ${ts}"
+    msg+="<b>Service:</b> ${SERVICE}"
+    msg+="<b>Protocol:</b> ${PROTO^^}"
+    msg+="<b>Region:</b> ${REGION}"
+    msg+="<b>Host:</b> ${HOST}"
+    msg+="<b>Public IP:</b> ${public_ip}"
+    msg+="<b>Country:</b> ${public_country}"
+    msg+="<b>Network:</b> ${NETWORK_DISPLAY}"
+    msg+="<b>Speed Limit:</b> ${speed_text}"
     msg+="${body}"
     echo "$msg"
   }
@@ -644,9 +644,9 @@ echo "$DATA_URI_JSON"
 echo "=========================================="
 
 # -------- Send to Telegram --------
-if [ -n "${BOT_TOKEN}" ] && [ -n "${CHAT_ID}" ]; then
+#if [ -n "${BOT_TOKEN}" ] && [ -n "${CHAT_ID}" ]; then
   # Send primary link (primary URL in HOST)
-  send_telegram "<b>🔗 PRIMARY (HOST):</b><pre>${SHARE_LINK}</pre>"
+ # send_telegram "<b>🔗 PRIMARY (HOST):</b><pre>${SHARE_LINK}</pre>"
   
   # Send alternative link (short URL) if different
   if [ "$ALT_LINK" != "$SHARE_LINK" ]; then
