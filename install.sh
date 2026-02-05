@@ -317,6 +317,9 @@ echo "⚙️ Enabling required APIs..."
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com --quiet
 echo "🚀 Deploying XRAY to Cloud Run..."
 
+# Get PROJECT_NUMBER early (needed for HOST env var)
+PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project 2>/dev/null) --format="value(projectNumber)" 2>/dev/null)
+
 # Build deploy command with optional parameters
 DEPLOY_ARGS=(
   "--source" "."
@@ -342,8 +345,7 @@ DEPLOY_ARGS+=("--quiet")
 # -------- Get URL --------
 gcloud run deploy "$SERVICE" "${DEPLOY_ARGS[@]}"
 
-# -------- Get URL --------
-PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project 2>/dev/null) --format="value(projectNumber)" 2>/dev/null)
+# -------- Get URL and Host --------
 
 # Use custom hostname if provided, otherwise use Cloud Run default
 if [ -n "${CUSTOM_HOST}" ]; then
