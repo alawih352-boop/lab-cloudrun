@@ -437,9 +437,36 @@ EOF
 elif [ "$PROTO" = "trojan" ]; then
   TROJAN_LINK="trojan://${UUID}@${HOST}:443?${QUERY_PARAMS}#${LINK_FRAGMENT}"
   echo ""
-  echo "📎 TROJAN LINK:"
+  echo "📎 TROJAN LINK (PRIMARY - HOST):"
   echo "$TROJAN_LINK"
   SHARE_LINK="$TROJAN_LINK"
+fi
+
+# -------- Generate Alternative URL (short URL) --------
+# Try to get the short URL from gcloud (if available)
+ALT_HOST=$(gcloud run services describe "$SERVICE" --region "$REGION" --format="value(status.url)" 2>/dev/null | sed 's|https://||' | sed 's|/||g' || echo "")
+
+if [ -z "$ALT_HOST" ]; then
+  ALT_HOST="$HOST"  # fallback to primary if short URL not available
+fi
+
+# Generate alternative link with short URL only if different from primary
+if [ "$ALT_HOST" != "$HOST" ]; then
+  if [ "$PROTO" = "vless" ]; then
+    ALT_VLESS_QUERY="${QUERY_PARAMS}&host=${ALT_HOST}"
+    ALT_LINK="vless://${UUID}@${ALT_HOST}:443?${ALT_VLESS_QUERY}#(${REGION}-alt)"
+  elif [ "$PROTO" = "vmess" ]; then
+    ALT_VMESS_JSON=$(echo "$VMESS_JSON" | sed "s|\"add\": \"$HOST\"|\"add\": \"$ALT_HOST\"|")
+    ALT_LINK="vmess://$(echo "$ALT_VMESS_JSON" | base64 -w 0)"
+  elif [ "$PROTO" = "trojan" ]; then
+    ALT_LINK="trojan://${UUID}@${ALT_HOST}:443?${QUERY_PARAMS}#(${REGION}-alt)"
+  fi
+  
+  echo ""
+  echo "📎 ALTERNATIVE LINK (SHORT URL - HEADER):"
+  echo "$ALT_LINK"
+else
+  ALT_LINK="$SHARE_LINK"
 fi
 
 # -------- Generate Data URIs --------
@@ -539,6 +566,25 @@ EOF
 )
 fi
 
+# -------- Generate Alternative URL (short URL) --------
+# Try to get the short URL from gcloud (if available)
+ALT_HOST=$(gcloud run services describe "$SERVICE" --region "$REGION" --format="value(status.url)" 2>/dev/null | sed 's|https://||' | sed 's|/||g' || echo "")
+
+if [ -z "$ALT_HOST" ]; then
+  ALT_HOST="$HOST"  # fallback to primary if short URL not available
+fi
+
+# Generate alternative link with short URL
+if [ "$PROTO" = "vless" ]; then
+  ALT_VLESS_QUERY="${QUERY_PARAMS}&host=${ALT_HOST}"
+  ALT_LINK="vless://${UUID}@${ALT_HOST}:443?${ALT_VLESS_QUERY}#(${REGION}-alt)"
+elif [ "$PROTO" = "vmess" ]; then
+  ALT_VMESS_JSON=$(echo "$VMESS_JSON" | sed "s|\"add\": \"$HOST\"|\"add\": \"$ALT_HOST\"|")
+  ALT_LINK="vmess://$(echo "$ALT_VMESS_JSON" | base64 -w 0)"
+elif [ "$PROTO" = "trojan" ]; then
+  ALT_LINK="trojan://${UUID}@${ALT_HOST}:443?${QUERY_PARAMS}#(${REGION}-alt)"
+fi
+
 DATA_URI_JSON="data:application/json;base64,$(echo -n "$CONFIG_JSON" | base64 -w 0)"
 echo "📊 Data URI (JSON):"
 echo "$DATA_URI_JSON"
@@ -546,6 +592,11 @@ echo "=========================================="
 
 # -------- Send to Telegram --------
 if [ -n "${BOT_TOKEN}" ] && [ -n "${CHAT_ID}" ]; then
-  # Send only the copy link
-  send_telegram "<b>🔗 Copy Link:</b><pre>${SHARE_LINK}</pre>"
+  # Send primary link (primary URL in HOST)
+  send_telegram "<b>🔗 PRIMARY (HOST):</b><pre>${SHARE_LINK}</pre>"
+  
+  # Send alternative link (short URL) if different
+  if [ "$ALT_LINK" != "$SHARE_LINK" ]; then
+    send_telegram "<b>🔗 ALTERNATIVE (HEADER):</b><pre>${ALT_LINK}</pre>"
+  fi
 fi
