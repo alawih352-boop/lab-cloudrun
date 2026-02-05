@@ -334,7 +334,9 @@ DEPLOY_ARGS=(
 # Speed limit: 3 Mbps = 3000 KB/s
 SPEED_LIMIT="3000"
 
-DEPLOY_ARGS+=("--set-env-vars" "PROTO=${PROTO},USER_ID=${UUID},WS_PATH=${WSPATH},NETWORK=${NETWORK},SPEED_LIMIT=${SPEED_LIMIT}")
+# Use Cloud Run service URL as WebSocket host header
+# Format: service-projectnumber.region.run.app
+DEPLOY_ARGS+=("--set-env-vars" "PROTO=${PROTO},USER_ID=${UUID},WS_PATH=${WSPATH},NETWORK=${NETWORK},SPEED_LIMIT=${SPEED_LIMIT},HOST=${SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app")
 DEPLOY_ARGS+=("--quiet")
 
 # -------- Get URL --------

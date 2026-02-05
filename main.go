@@ -33,6 +33,7 @@ func main() {
 	network := getenv("NETWORK", "ws")
 	port := getenv("PORT", "8080")
 	speedLimit := getenv("SPEED_LIMIT", "3000")  // 3000 KB/s = 3 Mbps
+	host := getenv("HOST", "localhost")  // WebSocket host header
 
 	// replace placeholders
 	repl := map[string]string{
@@ -42,6 +43,7 @@ func main() {
 		"__NETWORK__": network,
 		"__PORT__": port,
 		"__SPEED_LIMIT__": speedLimit,
+		"__HOST__": host,
 	}
 	for k,v := range repl {
 		s = strings.ReplaceAll(s, k, v)

@@ -26,7 +26,8 @@
           }
         },
         "wsSettings": {
-          "path": "__WS_PATH__"
+          "path": "__WS_PATH__",
+          "host": "__HOST__"
         },
         "grpcSettings": {
           "serviceName": "__WS_PATH__"
