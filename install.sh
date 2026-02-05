@@ -148,44 +148,15 @@ case "$PROTO_CHOICE" in
 esac
 
 # -------- Network Type --------
-if [ "${INTERACTIVE}" = true ] && [ -z "${NETWORK:-}" ]; then
-  echo ""
-  echo "🌐 Choose Network Type:"
-  echo "1) WebSocket (ws)"
-  echo "2) gRPC"
-  read -rp "Select network type [1-2] (default: 1): " NETWORK_CHOICE
-fi
-NETWORK_CHOICE="${NETWORK_CHOICE:-1}"
+# Cloud Run supports WebSocket (ws) reliably; gRPC has compatibility issues
+NETWORK="ws"
+NETWORK_DISPLAY="WebSocket"
 
-case "$NETWORK_CHOICE" in
-  1)
-    NETWORK="ws"
-    NETWORK_DISPLAY="WebSocket"
-    ;;
-  2)
-    NETWORK="grpc"
-    NETWORK_DISPLAY="gRPC"
-    ;;
-  *)
-    echo "❌ Invalid network type selection"
-    exit 1
-    ;;
-esac
-
-# -------- WS Path --------
-if [ "$NETWORK" = "ws" ]; then
-  if [ "${INTERACTIVE}" = true ] && [ -z "${WSPATH:-}" ]; then
-    read -rp "📡 WebSocket Path (default: /ws): " WSPATH
-  fi
-  WSPATH="${WSPATH:-/ws}"
-elif [ "$NETWORK" = "grpc" ]; then
-  if [ "${INTERACTIVE}" = true ] && [ -z "${WSPATH:-}" ]; then
-    read -rp "🔌 gRPC Service Name (default: xray): " WSPATH
-  fi
-  WSPATH="${WSPATH:-xray}"
-else
-  WSPATH=""
+# -------- WebSocket Path --------
+if [ "${INTERACTIVE}" = true ] && [ -z "${WSPATH:-}" ]; then
+  read -rp "📡 WebSocket Path (default: /ws): " WSPATH
 fi
+WSPATH="${WSPATH:-/ws}"
 
 # Custom hostname is not supported reliably by this script; always use Cloud Run default
 CUSTOM_HOST=""
@@ -411,24 +382,13 @@ fi
 echo "=========================================="
 
 # -------- Generate Protocol Links --------
-# -------- Generate Protocol Links --------
-# Build query parameters based on network type
-if [ "$NETWORK" = "ws" ]; then
-  QUERY_PARAMS="type=ws&security=tls&path=${WSPATH}"
-  if [ -n "${SNI}" ]; then
-    QUERY_PARAMS="${QUERY_PARAMS}&sni=${SNI}"
-  fi
-  if [ -n "${ALPN}" ]; then
-    QUERY_PARAMS="${QUERY_PARAMS}&alpn=${ALPN}"
-  fi
-elif [ "$NETWORK" = "grpc" ]; then
-  QUERY_PARAMS="type=grpc&security=tls&serviceName=${WSPATH}"
-  if [ -n "${SNI}" ]; then
-    QUERY_PARAMS="${QUERY_PARAMS}&sni=${SNI}"
-  fi
-  if [ -n "${ALPN}" ]; then
-    QUERY_PARAMS="${QUERY_PARAMS}&alpn=${ALPN}"
-  fi
+# Build query parameters for WebSocket (only supported on Cloud Run)
+QUERY_PARAMS="type=ws&security=tls&path=${WSPATH}"
+if [ -n "${SNI}" ]; then
+  QUERY_PARAMS="${QUERY_PARAMS}&sni=${SNI}"
+fi
+if [ -n "${ALPN}" ]; then
+  QUERY_PARAMS="${QUERY_PARAMS}&alpn=${ALPN}"
 fi
 
 # Build fragment with custom ID
