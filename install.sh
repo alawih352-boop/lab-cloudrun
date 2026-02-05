@@ -110,12 +110,52 @@ send_telegram() {
   if [ -z "${BOT_TOKEN}" ] || [ -z "${CHAT_ID}" ]; then
     return 0
   fi
-  
-  MESSAGE="$1"
-  # URL encode the message properly
+
+  build_telegram_message() {
+    local body="$1"
+    local ts
+    ts=$(date "+%Y-%m-%d %H:%M:%S %Z")
+    local speed_text
+    if [[ "${SPEED_LIMIT}" =~ ^[0-9]+$ ]]; then
+      local mbps
+      mbps=$(awk "BEGIN{printf \"%.2f\", (${SPEED_LIMIT}*8)/1000}")
+      speed_text="${SPEED_LIMIT} KB/s (~${mbps} Mbps)"
+    else
+      speed_text="${SPEED_LIMIT}"
+    fi
+    # Try to get public IP and country (non-blocking with short timeout)
+    local ip_info
+    local public_ip="unknown"
+    local public_country="unknown"
+    ip_info=$(curl -s --max-time 3 https://ipapi.co/json || true)
+    if [ -n "$ip_info" ]; then
+      public_ip=$(echo "$ip_info" | sed -n 's/.*"ip"[[:space:]]*:[[:space:]]*"\([^\"]*\)".*/\1/p')
+      public_country=$(echo "$ip_info" | sed -n 's/.*"country_name"[[:space:]]*:[[:space:]]*"\([^\"]*\)".*/\1/p')
+      [ -z "$public_ip" ] && public_ip="unknown"
+      [ -z "$public_country" ] && public_country="unknown"
+    fi
+
+    local msg="<b>📌 XRAY Deployment</b>\n"
+    msg+="<b>Date:</b> ${ts}\n"
+    msg+="<b>Service:</b> ${SERVICE}\n"
+    msg+="<b>Protocol:</b> ${PROTO^^}\n"
+    msg+="<b>Region:</b> ${REGION}\n"
+    msg+="<b>Host:</b> ${HOST}\n"
+    msg+="<b>Public IP:</b> ${public_ip}\n"
+    msg+="<b>Country:</b> ${public_country}\n"
+    msg+="<b>Network:</b> ${NETWORK_DISPLAY}\n"
+    msg+="<b>Speed Limit:</b> ${speed_text}\n\n"
+    msg+="${body}"
+    echo "$msg"
+  }
+
+  local raw="$1"
+  local message
+  message=$(build_telegram_message "$raw")
+  # URL encode the message properly and send as HTML
   curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
     --data-urlencode "chat_id=${CHAT_ID}" \
-    --data-urlencode "text=${MESSAGE}" \
+    --data-urlencode "text=${message}" \
     -d "parse_mode=HTML" \
     > /dev/null 2>&1
 }
@@ -334,8 +374,9 @@ DEPLOY_ARGS=(
 [ -n "${MAX_INSTANCES}" ] && DEPLOY_ARGS+=("--max-instances" "${MAX_INSTANCES}")
 [ -n "${CONCURRENCY}" ] && DEPLOY_ARGS+=("--concurrency" "${CONCURRENCY}")
 
-# Speed limit: 3 Mbps = 3000 KB/s
-SPEED_LIMIT="3000"
+# Speed limit in KB/s (default 3000 KB/s ≈ 24 Mbps). Can be overridden with the
+# environment variable `SPEED_LIMIT` before running this script.
+SPEED_LIMIT="${SPEED_LIMIT:-3000}"
 
 # Use Cloud Run service URL as WebSocket host header
 # Format: service-projectnumber.region.run.app
@@ -373,7 +414,12 @@ elif [ "$NETWORK" = "grpc" ]; then
 fi
 echo "Network  : $NETWORK_DISPLAY"
 echo "TLS      : ON"
-echo "Speed Limit: 3 Mbps per connection"
+if [[ "${SPEED_LIMIT}" =~ ^[0-9]+$ ]]; then
+  MBPS=$(awk "BEGIN{printf \"%.2f\", (${SPEED_LIMIT}*8)/1000}")
+  echo "Speed Limit: ${SPEED_LIMIT} KB/s (~${MBPS} Mbps) per connection"
+else
+  echo "Speed Limit: ${SPEED_LIMIT}"
+fi
 if [ -n "${MEMORY}${CPU}${TIMEOUT}${MAX_INSTANCES}${CONCURRENCY}" ]; then
   echo ""
   echo "⚙️  Configuration Applied:"
