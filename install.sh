@@ -152,9 +152,8 @@ if [ "${INTERACTIVE}" = true ] && [ -z "${NETWORK:-}" ]; then
   echo ""
   echo "🌐 Choose Network Type:"
   echo "1) WebSocket (ws)"
-  echo "2) TCP"
-  echo "3) gRPC"
-  read -rp "Select network type [1-3] (default: 1): " NETWORK_CHOICE
+  echo "2) gRPC"
+  read -rp "Select network type [1-2] (default: 1): " NETWORK_CHOICE
 fi
 NETWORK_CHOICE="${NETWORK_CHOICE:-1}"
 
@@ -164,10 +163,6 @@ case "$NETWORK_CHOICE" in
     NETWORK_DISPLAY="WebSocket"
     ;;
   2)
-    NETWORK="tcp"
-    NETWORK_DISPLAY="TCP"
-    ;;
-  3)
     NETWORK="grpc"
     NETWORK_DISPLAY="gRPC"
     ;;
@@ -420,14 +415,6 @@ echo "=========================================="
 # Build query parameters based on network type
 if [ "$NETWORK" = "ws" ]; then
   QUERY_PARAMS="type=ws&security=tls&path=${WSPATH}"
-  if [ -n "${SNI}" ]; then
-    QUERY_PARAMS="${QUERY_PARAMS}&sni=${SNI}"
-  fi
-  if [ -n "${ALPN}" ]; then
-    QUERY_PARAMS="${QUERY_PARAMS}&alpn=${ALPN}"
-  fi
-elif [ "$NETWORK" = "tcp" ]; then
-  QUERY_PARAMS="type=tcp&security=tls&headerType=none"
   if [ -n "${SNI}" ]; then
     QUERY_PARAMS="${QUERY_PARAMS}&sni=${SNI}"
   fi
