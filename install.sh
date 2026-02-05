@@ -394,6 +394,8 @@ fi
 if [ -n "${ALPN}" ]; then
   QUERY_PARAMS="${QUERY_PARAMS}&alpn=${ALPN}"
 fi
+# Add host parameter for WebSocket compatibility
+QUERY_PARAMS="${QUERY_PARAMS}&host=${HOST}"
 
 # Build fragment with custom ID
 LINK_FRAGMENT="xray"
@@ -455,13 +457,16 @@ fi
 # Generate alternative link with short URL only if different from primary
 if [ "$ALT_HOST" != "$HOST" ]; then
   if [ "$PROTO" = "vless" ]; then
-    ALT_VLESS_QUERY="${QUERY_PARAMS}&host=${ALT_HOST}"
+    # Replace host in query params with ALT_HOST
+    ALT_VLESS_QUERY=$(echo "$QUERY_PARAMS" | sed "s/&host=${HOST}/&host=${ALT_HOST}/")
     ALT_LINK="vless://${UUID}@${ALT_HOST}:443?${ALT_VLESS_QUERY}#(${REGION}-alt)"
   elif [ "$PROTO" = "vmess" ]; then
     ALT_VMESS_JSON=$(echo "$VMESS_JSON" | sed "s|\"add\": \"$HOST\"|\"add\": \"$ALT_HOST\"|")
     ALT_LINK="vmess://$(echo "$ALT_VMESS_JSON" | base64 -w 0)"
   elif [ "$PROTO" = "trojan" ]; then
-    ALT_LINK="trojan://${UUID}@${ALT_HOST}:443?${QUERY_PARAMS}#(${REGION}-alt)"
+    # Replace host in query params with ALT_HOST
+    ALT_TROJAN_QUERY=$(echo "$QUERY_PARAMS" | sed "s/&host=${HOST}/&host=${ALT_HOST}/")
+    ALT_LINK="trojan://${UUID}@${ALT_HOST}:443?${ALT_TROJAN_QUERY}#(${REGION}-alt)"
   fi
   
   echo ""
