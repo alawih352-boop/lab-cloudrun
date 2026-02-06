@@ -341,6 +341,11 @@ if [ "${INTERACTIVE}" = true ] && [ -z "${CONCURRENCY:-}" ]; then
 fi
 CONCURRENCY="${CONCURRENCY:-}"
 
+if [ "${INTERACTIVE}" = true ] && [ -z "${SPEED_LIMIT:-}" ]; then
+  read -rp "⚡ Speed Limit (KB/s) [e.g., 1000, 3000, 5000]: " SPEED_LIMIT
+fi
+SPEED_LIMIT="${SPEED_LIMIT:-3000}"
+
 # Show what was selected
 echo ""
 echo "✅ Selected configuration:"
@@ -349,6 +354,7 @@ echo "✅ Selected configuration:"
 [ -n "${TIMEOUT}" ] && echo "   Timeout: ${TIMEOUT}s" || echo "   Timeout: (will use Cloud Run default)"
 [ -n "${MAX_INSTANCES}" ] && echo "   Max instances: ${MAX_INSTANCES}" || echo "   Max instances: (will use Cloud Run default)"
 [ -n "${CONCURRENCY}" ] && echo "   Max concurrency: ${CONCURRENCY}" || echo "   Max concurrency: (will use Cloud Run default)"
+echo "   Speed Limit: ${SPEED_LIMIT} KB/s"
 
 # -------- Sanity checks --------
 if ! command -v gcloud >/dev/null 2>&1; then
@@ -384,9 +390,7 @@ DEPLOY_ARGS=(
 [ -n "${MAX_INSTANCES}" ] && DEPLOY_ARGS+=("--max-instances" "${MAX_INSTANCES}")
 [ -n "${CONCURRENCY}" ] && DEPLOY_ARGS+=("--concurrency" "${CONCURRENCY}")
 
-# Speed limit in KB/s (default 3000 KB/s ≈ 24 Mbps). Can be overridden with the
-# environment variable `SPEED_LIMIT` before running this script.
-SPEED_LIMIT="${SPEED_LIMIT:-3000}"
+# Speed limit is now configured interactively or via environment variable
 
 # Use Cloud Run service URL as WebSocket host header
 # Format: service-projectnumber.region.run.app
