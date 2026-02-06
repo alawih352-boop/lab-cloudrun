@@ -37,6 +37,15 @@
         "enabled": true,
         "destOverride": ["http", "tls"]
       }
+    },
+    {
+      "port": 10085,
+      "listen": "127.0.0.1",
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "127.0.0.1"
+      },
+      "tag": "api"
     }
   ],
   "outbounds": [
@@ -49,12 +58,25 @@
         }
       },
       "tag": "direct"
+    },
+    {
+      "protocol": "freedom",
+      "tag": "api"
     }
   ],
   "stats": {},
   "api": {
     "tag": "api",
     "services": ["StatsService"]
+  },
+  "routing": {
+    "rules": [
+      {
+        "inboundTag": ["api"],
+        "outboundTag": "api",
+        "type": "field"
+      }
+    ]
   },
   "policy": {
     "levels": {

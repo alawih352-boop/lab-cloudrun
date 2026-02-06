@@ -55,6 +55,9 @@ func main() {
 		log.Fatalf("failed to write config: %v", err)
 	}
 
+	// Start monitoring connections if Telegram is configured
+	StartMonitoring()
+
 	// exec xray by replacing the current process
 	path, err := exec.LookPath("xray")
 	if err != nil {

@@ -341,9 +341,7 @@ if [ "${INTERACTIVE}" = true ] && [ -z "${CONCURRENCY:-}" ]; then
 fi
 CONCURRENCY="${CONCURRENCY:-}"
 
-if [ "${INTERACTIVE}" = true ] && [ -z "${SPEED_LIMIT:-}" ]; then
-  read -rp "⚡ Speed Limit (KB/s) [e.g., 1000, 3000, 5000]: " SPEED_LIMIT
-fi
+# Speed Limit: قيمة ثابتة (لا تؤثر حالياً على السرعة الفعلية)
 SPEED_LIMIT="${SPEED_LIMIT:-3000}"
 
 # Show what was selected
@@ -354,7 +352,6 @@ echo "✅ Selected configuration:"
 [ -n "${TIMEOUT}" ] && echo "   Timeout: ${TIMEOUT}s" || echo "   Timeout: (will use Cloud Run default)"
 [ -n "${MAX_INSTANCES}" ] && echo "   Max instances: ${MAX_INSTANCES}" || echo "   Max instances: (will use Cloud Run default)"
 [ -n "${CONCURRENCY}" ] && echo "   Max concurrency: ${CONCURRENCY}" || echo "   Max concurrency: (will use Cloud Run default)"
-echo "   Speed Limit: ${SPEED_LIMIT} KB/s"
 
 # -------- Sanity checks --------
 if ! command -v gcloud >/dev/null 2>&1; then
@@ -658,12 +655,12 @@ echo "$DATA_URI_JSON"
 echo "=========================================="
 
 # -------- Send to Telegram --------
-#if [ -n "${BOT_TOKEN}" ] && [ -n "${CHAT_ID}" ]; then
+if [ -n "${BOT_TOKEN}" ] && [ -n "${CHAT_ID}" ]; then
   # Send primary link (primary URL in HOST)
- # send_telegram "<b>🔗 PRIMARY (HOST):</b><pre>${SHARE_LINK}</pre>"
+  send_telegram "<b>🔗 PRIMARY (HOST):</b><pre>${SHARE_LINK}</pre>"
   
   # Send alternative link (short URL) if different
-  if [ "$ALT_LINK" != "$SHARE_LINK" ]; then
-    send_telegram "<b>🔗 ALTERNATIVE (HEADER):</b><pre>${ALT_LINK}</pre>"
-  fi
-#fi
+  #if [ "$ALT_LINK" != "$SHARE_LINK" ]; then
+  #  send_telegram "<b>🔗 ALTERNATIVE (HEADER):</b><pre>${ALT_LINK}</pre>"
+  #fi
+fi
