@@ -7,7 +7,9 @@ COPY config.json.tpl /src/config.json.tpl
 COPY main.go /src/main.go
 COPY go.mod /src/go.mod
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-s -w' -o /configgen /src/main.go
+#RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-s -w' -o /configgen /src/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-s -w' -o /configgen .
+
 
 FROM ghcr.io/xtls/xray-core:latest
 
