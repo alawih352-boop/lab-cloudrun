@@ -79,7 +79,7 @@ if [ "${INTERACTIVE}" = true ] && [ -z "${PRESET:-}" ]; then
   echo ""
   echo "⚡ Quick Start with Presets:"
   echo "1) production (2048MB, 1 CPU, 16 instances, 100 concurrency)"
-  echo "2) custom (اختياري - configure everything manually)"
+  echo "2) custom (configure everything manually)"
   read -rp "Select preset [1-2] (default: 1): " PRESET_CHOICE
 fi
 PRESET_CHOICE="${PRESET_CHOICE:-1}"
@@ -135,16 +135,26 @@ send_telegram() {
       [ -z "$public_country" ] && public_country="unknown"
     fi
 
-    local msg="<b>📌 XRAY Deployment</b>"
-    msg+="<b>Date: ${ts}</b>"
-    msg+="<b>Service: ${SERVICE}</b>"
-    msg+="<b>Protocol: ${PROTO^^}</b>"
-    msg+="<b>Region: ${REGION}</b>"
-    msg+="<b>Host: ${HOST}</b>"
-    msg+="<b>Public IP: ${public_ip}</b>"
-    msg+="<b>Country: ${public_country}</b>"
-    msg+="<b>Network: ${NETWORK_DISPLAY}</b>"
-    msg+="<b>Speed Limit: ${speed_text}</b>"
+    local msg="<b>📌 XRAY Deployment</b>
+    "
+    msg+="<b>Date:</b> ${ts}
+    "
+    msg+="<b>Service:</b> ${SERVICE}
+    "
+    msg+="<b>Protocol:</b> ${PROTO^^}
+    "
+    msg+="<b>Region:</b> ${REGION}
+    "
+    msg+="<b>Host:</b> ${HOST}
+    "
+    msg+="<b>Public IP:</b> ${public_ip}
+    "
+    msg+="<b>Country:</b> ${public_country}
+    "
+    msg+="<b>Network:</b> ${NETWORK_DISPLAY}
+    "
+    msg+="<b>Speed Limit:</b> ${speed_text}
+    "
     msg+="${body}"
     echo "$msg"
   }
@@ -652,4 +662,4 @@ echo "=========================================="
   if [ "$ALT_LINK" != "$SHARE_LINK" ]; then
     send_telegram "<b>🔗 ALTERNATIVE (HEADER):</b><pre>${ALT_LINK}</pre>"
   fi
-fi
+#fi
