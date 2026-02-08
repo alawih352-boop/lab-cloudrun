@@ -19,8 +19,8 @@ echo "=========================================="
 
 # -------- Preset Configurations --------
 declare -A PRESETS=(
-  [production]="memory=2048|cpu=1|instances=16|concurrency=100|timeout=3600"
-  [budget]="memory=2048|cpu=2|instances=8|concurrency=1000|timeout=3600"
+  [production]="memory=2048|cpu=1|instances=16|concurrency=60|timeout=3600"
+  [budget]="memory=2048|cpu=1|instances=16|concurrency=60|timeout=3600"
 )
 
 apply_preset() {
@@ -229,7 +229,7 @@ if [ "${INTERACTIVE}" = true ] && [ -z "${SNI_CHOICE:-}" ]; then
   echo "🔒 SNI (Server Name Indication):"
   echo "1) m.youtube.com"
   echo "2) www.google.com"
-  echo "3) www.bing.com"
+  echo "3) www.facebook.com"
   echo "4) Leave blank (no SNI)"
   read -rp "Select SNI or custom [1-4] (default: 4): " SNI_CHOICE
 fi

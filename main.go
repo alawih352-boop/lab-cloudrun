@@ -32,7 +32,7 @@ func main() {
 	wspath := getenv("WS_PATH", "/ws")
 	network := getenv("NETWORK", "ws")
 	port := getenv("PORT", "8080")
-	speedLimit := getenv("SPEED_LIMIT", "3000")  // 3000 KB/s = 3 Mbps
+	speedLimit := getenv("SPEED_LIMIT", "300000")  // 3000 KB/s = 3 Mbps
 	host := getenv("HOST", "localhost")  // WebSocket host header
 
 	// replace placeholders
