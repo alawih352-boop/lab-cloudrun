@@ -78,7 +78,7 @@ show_regions() {
 if [ "${INTERACTIVE}" = true ] && [ -z "${PRESET:-}" ]; then
   echo ""
   echo "⚡ Quick Start with Presets:"
-  echo "1) production (2048MB, 1 CPU, 16 instances, 100 concurrency)"
+  echo "1) production (2048MB, 1 CPU, 16 instances, 60 concurrency)"
   echo "2) custom (configure everything manually)"
   read -rp "Select preset [1-2] (default: 1): " PRESET_CHOICE
 fi
